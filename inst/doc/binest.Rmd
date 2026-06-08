@@ -1,0 +1,201 @@
+---
+title: "Estimating District Means from Binned Test Scores with binest"
+author: "Paul T. von Hippel and David J. Hunter"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Estimating District Means from Binned Test Scores with binest}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment  = "#>"
+)
+```
+
+# Overview
+
+The `binest` package estimates group-level means and standard deviations
+from counts of observations falling in ordered bins, when individual
+observations are not available. Three estimators are provided:
+
+* `bin_means()`: a fast per-group estimator under within-group
+  normality. Runs in time linear in the number of groups times the
+  number of bins.
+* `mle_hetop()`: maximum-likelihood fit of the heteroskedastic ordered
+  probit model (HETOP; Reardon, Shear, Castellano & Ho 2017).
+* `fh_hetop()`: Bayesian variant of HETOP via Gibbs sampling (Lockwood,
+  Castellano & Shear 2018).
+
+`bin_means()` is the recommended function. It runs in milliseconds per
+group and produces estimates practically identical to HETOP. The HETOP
+commands `mle_hetop()` and `fh_hetop()` are superseded by `bin_means()`
+but remain in the package for comparison; they are harder to use and at
+least 100 times slower.
+
+For a detailed empirical comparison and the theoretical case for
+preferring bin means, see the accompanying paper.
+
+This vignette compares all three estimators on a bundled dataset:
+district-level bin counts and reported mean scale scores from the
+2017-18 administration of the State of Texas Assessments of Academic
+Readiness (STAAR) Grade 6 mathematics test.
+
+# The Texas data
+
+```{r}
+library(binest)
+data(tx_g6_math_2018)
+dim(tx_g6_math_2018)
+head(tx_g6_math_2018, 3)
+```
+
+The dataset has 1,151 districts, each with bin counts in four
+proficiency categories and a reported average scale score that
+serves as ground truth.
+
+The published cut scores defining the bin boundaries are 1,536,
+1,653, and 1,772:
+
+```{r}
+ngk  <- with(tx_g6_math_2018,
+             cbind(unsatisfactory, approaches, meets, masters))
+cuts <- c(1536, 1653, 1772)
+truth <- tx_g6_math_2018$reported_mean
+```
+
+# Method 1: `bin_means()` with known cutpoints
+
+This uses the published cut scores directly. Output `est_raw$group_mean_mle` is on the test-score scale; `est_std$group_mean_mle`
+is on a standardized scale (population-weighted state mean 0, total
+state SD 1).
+
+```{r}
+t0 <- Sys.time()
+fit_bm_known <- bin_means(ngk, cutpoints = cuts)
+t_bm_known   <- as.numeric(Sys.time() - t0, units = "secs")
+cor(fit_bm_known$est_raw$group_mean_mle, truth)
+```
+
+```{r, fig.width = 4.5, fig.height = 4.5}
+plot(truth, fit_bm_known$est_raw$group_mean_mle,
+     pch = 16, cex = 0.5, col = rgb(0, 0, 0, 0.3),
+     xlab = "True district mean",
+     ylab = "Estimated mean (test-score scale)",
+     main = "bin_means (known cuts)")
+abline(0, 1, col = "red", lty = 2)
+```
+
+# Method 2: `bin_means()` with cutpoints estimated from data
+
+When cutpoints are not known, `bin_means()` derives them from pooled
+state bin proportions via `qnorm(cumsum(pooled_props))`. Output is on
+the standardized scale.
+
+```{r}
+t0 <- Sys.time()
+fit_bm_null <- bin_means(ngk)
+t_bm_null   <- as.numeric(Sys.time() - t0, units = "secs")
+```
+
+```{r, fig.width = 4.5, fig.height = 4.5}
+plot(truth, fit_bm_null$est_std$group_mean_mle,
+     pch = 16, cex = 0.5, col = rgb(0, 0, 0, 0.3),
+     xlab = "True district mean",
+     ylab = "Estimated mean (standardized)",
+     main = "bin_means (cuts from data)")
+```
+
+# Method 3: HETOP MLE on a 50-district subsample
+
+`mle_hetop()` fits a joint maximum-likelihood model across all groups.
+On the full 1,151-district dataset, it does not converge within a
+reasonable runtime. We illustrate the method on a
+representative random subsample of 50 districts.
+
+```{r}
+set.seed(1)
+sub <- sample(nrow(ngk), 50)
+t0 <- Sys.time()
+fit_mle <- mle_hetop(ngk[sub, ], iterlim = 200)
+t_mle <- as.numeric(Sys.time() - t0, units = "secs")
+cor(fit_mle$est_star$mug, truth[sub])
+```
+
+```{r, fig.width = 4.5, fig.height = 4.5}
+plot(truth[sub], fit_mle$est_star$mug,
+     pch = 16, cex = 0.5, col = rgb(0, 0, 0, 0.3),
+     xlab = "True district mean",
+     ylab = "Estimated mean (standardized)",
+     main = "HETOP MLE (50-district subsample)")
+```
+
+# Method 4: HETOP Bayes on the full dataset
+
+`fh_hetop()` is the Bayesian variant. Each Gibbs iteration is linear in
+the number of groups; on 1,151 districts the model fits in about nine
+minutes. The runtime in this vignette is deliberately short to keep
+the package build tractable; for production use, longer chains are
+recommended.
+
+```{r, eval = FALSE}
+state_props <- colSums(ngk) / sum(ngk)
+state_cum   <- cumsum(state_props)
+
+t0 <- Sys.time()
+fit_fh <- fh_hetop(
+  ngk       = ngk,
+  fixedcuts = qnorm(state_cum[1:2]),
+  p         = c(10, 10),
+  m         = c(100, 100),
+  gridL     = c(-5.0, log(0.10)),
+  gridU     = c( 5.0, log(5.0)),
+  n.iter    = 2000,
+  n.burnin  = 1000,
+  seed      = 3142
+)
+t_fh <- as.numeric(Sys.time() - t0, units = "secs")
+cor(fit_fh$fh_hetop_extras$est_star_mug$theta_pm, truth)
+```
+
+Because this chunk takes about nine minutes, the package ships with
+the per-district HETOP-Bayes posterior means pre-computed and stored
+in `inst/extdata/fh_hetop_means_tx_g6_math_2018.rds`. The scatterplot
+below uses those cached values.
+
+```{r, fig.width = 4.5, fig.height = 4.5}
+fh_means_file <- system.file("extdata",
+                             "fh_hetop_means_tx_g6_math_2018.rds",
+                             package = "binest")
+fh_means <- readRDS(fh_means_file)
+
+plot(truth, fh_means,
+     pch = 16, cex = 0.5, col = rgb(0, 0, 0, 0.3),
+     xlab = "True district mean",
+     ylab = "Estimated mean (standardized)",
+     main = "HETOP Bayes (full data, cached)")
+```
+
+# Summary
+
+| Method | Runtime | Districts |
+|--------|---------|-----------|
+| `bin_means()` (known cutpoints) | `r sprintf("%.0f s", t_bm_known)` | `r sum(!is.na(fit_bm_known$est_raw$group_mean_mle))` / 1151 |
+| `bin_means()` (cutpoints from data) | `r sprintf("%.0f s", t_bm_null)` | `r sum(!is.na(fit_bm_null$est_raw$group_mean_mle))` / 1151 |
+| `mle_hetop()` (50-district subsample) | `r sprintf("%.0f s", t_mle)` | 50 / 50 |
+| fh_hetop (full data, not run above) | 450 s | 1151 / 1151 |
+
+Note 1: `bin_means()` ran on all 1,151 districts in a small fraction of a second --- roughly 500 times faster than `fh_hetop()`, and twice as fast as `mle_hetop()` ran on a 50-district subsample.
+
+Note 2: `bin_means()` returned an estimate for 1,134 of the 1,151 districts. It returned NA for the remaining 17 districts, where the mean and SD wer unidentified because 2 of the 4 bins were empty. These districts contained fewer than 20 students each, and the Stanford Education Data Archive does not publish estimates for districts with fewer than 20 students (Fahle et al. 2021). Note that the HETOP functions return estimates for 2-bin districts, but they do so using fallback rules that are not part of the main estimation logic.
+
+# References
+
+Fahle, E. M., Chavez, B., Kalogrides, D., Shear, B. R., Reardon, S. F., & Ho, A. D. (2021). *Stanford Education Data Archive: Technical Documentation, Version 4.1.* Stanford University.
+
+Lockwood, J. R., Castellano, K. E., & Shear, B. R. (2018). Flexible Bayesian models for inferences from coarsened, group-level achievement data. *Journal of Educational and Behavioral Statistics, 43*(6), 663–692. https://doi.org/10.3102/1076998618795124
+
+Reardon, S. F., Shear, B. R., Castellano, K. E., & Ho, A. D. (2017). Using heteroskedastic ordered probit models to recover moments of continuous test score distributions from coarsened data. *Journal of Educational and Behavioral Statistics, 42*(1), 3–45. https://doi.org/10.3102/1076998616666279
