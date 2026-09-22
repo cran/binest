@@ -1,34 +1,24 @@
 \name{mle_hetop}
 \alias{mle_hetop}
 
-\title{Maximum Likelihood Estimation of Heteroskedastic Ordered Probit (HETOP) Model}
+\title{mle_hetop(): Joint Maximum Likelihood Estimation of the HETOP Model from Bin Counts}
 
 \section{Deprecated}{
-  \code{mle_hetop()} is deprecated in favor of \code{\link[=fast_hetop]{fast_hetop()}},
-  which runs much faster, produces an estimate for every identified
-  group, and on real data has been found to be at least as accurate.
-  \code{mle_hetop()} is retained in the package only for comparison
-  purposes and receives no further development.
+  \code{mle_hetop()} is deprecated in favor of
+  \code{fast_hetop(estimator = "ML")}, which produces ML estimates
+  much faster. \code{mle_hetop()} is preserved for comparison but will
+  not be maintained.
 }
 
 \description{
-  Computes MLEs of \code{G} group means and standard deviations using
-  count data from \code{K} ordinal categories under a heteroskedastic
-  ordered probit model.  Estimation is conducted conditional on two
-  fixed cutpoints, and additional constraints on group parameters are
-  imposed if needed to achieve identification in the presence of sparse
-  counts.
+  \code{mle_hetop()} returns maximum likelihood estimates from the
+  HETOP model. Estimates are identical to those from
+  \code{fast_hetop(estimator = "ML")}, but \code{mle_hetop()} runs much
+  more slowly because it tries to estimate all districts at once and
+  uses numerical approximations for the first and second derivatives.
 
-  This implementation is forked from the \code{HETOP} package by
-  J. R. Lockwood (CRAN, last released 2019).  We have modified the
-  original code in two ways: (1) the inner cell-probability loop is
-  vectorized, which substantially speeds up the runtime per
-  likelihood evaluation; and (2) the user-facing arguments
-  \code{fixedcuts} and \code{svals} have been removed, because some
-  users found them confusing and supplying incompatible values caused
-  silent optimization failures.  Cutpoints and starting values are
-  now derived internally from the data.
-
+  This implementation is forked, with small changes, from the
+  \code{HETOP} package by J. R. Lockwood.
 }
 
 \usage{
@@ -53,48 +43,31 @@ mle_hetop(ngk, iterlim = 1500, ...)
 }
 
 \details{
-  This function requires \code{K >= 3}.  If \code{ngk} has all nonzero
-  counts, all model parameters are identified.  Alternatively, arbitrary
-  identification rules are required to ensure the existence of the MLE
-  when there are one or more groups with nonzero counts in fewer than
-  three categories.  This function adopts the following rules.  For any
-  group with nonzero counts in fewer than three categories, the log of
-  the group standard deviation is constrained to equal the mean of the
-  log standard deviations for the remaining groups.  Further constraints
-  are imposed to handle groups for which all data fall into either the
-  lowest or highest category.  Let \code{S} be the set of groups for
-  which it is not the case that all data fall into an extreme category.
-  Then for any group with all data in the lowest category, the mean for
-  that group is constrained to be the minimum of the group means over
-  \code{S}.  Similarly, for any group with all data in the highest
-  category, the mean for that grou is constrained to be the maximum of
-  the group means over \code{S}.
+  This function requires at least 3 populated bins to identify the
+  model. For districts with fewer than 3 populated bins, we identify
+  the mean by assuming that the SD is equal to the geometric mean of
+  the SDs for other districts.
 
-  The location and scale of the group means are identified for the
-  purpose of conducting the estimation by fixing two of the cutpoints.
-  This function derives the two fixed cutpoints internally from the
-  pooled bin proportions via
-  \code{qnorm(cumsum(colSums(ngk)/sum(ngk))[1:2])}, which places them
-  on the same standardized scale as the internal starting values for
-  the group means and log standard deviations.  However in practice it
-  may be desirable to express the group means and standard deviations
-  on a scale that is more easily interpreted; see Reardon et al. (2017)
-  for details.  This function reports estimates on four different
-  scales: (1) the original estimation scale with two fixed cutpoints;
-  (2) a scale defined by forcing the group means and
-  log group standard deviations each to have weighted mean of zero,
-  where weights are proportional to the total count for each group; (3)
-  a scale where the population mean of the latent variable is zero and
-  the population standard deviation is one; and (4) a scale similar to
-  (3) but where a bias correction is applied.  See Reardon et al. (2017)
-  for details on this bias correction.
+  This function can report estimates on four different scales:
 
-  The function also returns an estimated intracluster correlation (ICC)
-  of the latent variable, defined as the ratio of the between-group
-  variance of the latent variable to its marginal variance.  Scales
-  (1)-(3) above lead to the same estimated ICC; scale (4) uses a
-  bias-corrected estimate of the ICC which will not in general equal the
-  estimate from scales (1)-(3).
+  \enumerate{
+    \item the original estimation scale with two fixed cutpoints;
+    \item a scale defined by forcing the group means and log group
+      standard deviations each to have weighted mean of zero, where
+      weights are proportional to the total count for each group;
+    \item a scale where the population mean of the latent variable is
+      zero and the population standard deviation is one; and
+    \item a scale similar to (3) but where a bias correction is
+      applied. See Reardon et al. (2017) for details on this bias
+      correction.
+  }
+
+  The function also returns an estimated intracluster correlation
+  (ICC) of the latent variable, defined as the ratio of the
+  between-group variance of the latent variable to its marginal
+  variance. Scales (1)-(3) above lead to the same estimated ICC;
+  scale (4) uses a bias-corrected estimate of the ICC which will not
+  in general equal the estimate from scales (1)-(3).
 }
 
 \value{
@@ -138,8 +111,8 @@ mle_hetop(ngk, iterlim = 1500, ...)
 
 \author{
   J. R. Lockwood (original implementation); David J. Hunter and
-  Paul T. von Hippel \email{ph3828@eid.utexas.edu} (vectorization
-  and API simplification).
+  Paul T. von Hippel \email{ph3828@eid.utexas.edu} (modifications for
+  \pkg{binest}).
 }
 
 \examples{

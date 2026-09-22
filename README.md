@@ -14,7 +14,7 @@ structure:
 * `mle_hetop()` — maximizes the likelihood over all groups at once.
   Returns the same estimates as `fast_hetop(estimator = "ML")`, far
   more slowly. Deprecated in favor of `fast_hetop()`.
-* `fh_hetop()` — fits the model by MCMC, placing a hyperprior over the
+* `fh_hetop()` — fits the model by MCMC, placing a prior over the
   group parameters and reporting posterior means. Deprecated in favor
   of `fast_hetop()`.
 

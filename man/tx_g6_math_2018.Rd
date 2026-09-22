@@ -2,16 +2,20 @@
 \alias{tx_g6_math_2018}
 \docType{data}
 
-\title{Texas STAAR Grade 6 Mathematics, 2017-18: District-Level Bin Counts}
+\title{tx_g6_math_2018: Texas STAAR Grade 6 Mathematics Scores: District-Level Bin Counts}
 
 \description{
-  District-level counts of students in each of four proficiency
-  categories on the Texas State of Texas Assessments of Academic
-  Readiness (STAAR) Grade 6 mathematics test, 2017-18 administration.
-  For each district the dataset also reports the average score
-  across all tested students, which can be used as ground truth for
-  evaluating estimators that recover district means from binned
-  counts.
+  \code{tx_g6_math_2018} is a bundled dataset used in the vignette. It
+  can be used to test the properties of HETOP estimators in empirical
+  data that may violate some model assumptions.
+
+  \code{tx_g6_math_2018} provides district-level counts of students in
+  each of four score bins on the Texas State of Texas Assessments of
+  Academic Readiness (STAAR) Grade 6 mathematics test, 2017-18
+  administration. For each district the dataset also reports the
+  average score reported by the Texas Education Agency, which can be
+  used as ground truth for evaluating estimators that recover district
+  means from binned counts.
 }
 
 \usage{data(tx_g6_math_2018)}

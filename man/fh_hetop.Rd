@@ -1,35 +1,33 @@
 \name{fh_hetop}
 \alias{fh_hetop}
 
-\title{Fit Fay-Herriot Heteroskedastic Ordered Probit (FH-HETOP) Model
-  using JAGS}
+\title{fh_hetop(): Bayesian Estimation of the HETOP Model using JAGS}
 
 \section{Deprecated}{
-  \code{fh_hetop()} is deprecated in favor of \code{\link[=fast_hetop]{fast_hetop()}},
-  which runs much faster, requires no external dependencies (no JAGS
-  installation), and on real data has been found to be at least as
-  accurate. \code{fh_hetop()} is retained in the package only for
-  comparison purposes and receives no further development.
+  \code{fh_hetop()} is deprecated in favor of
+  \code{fast_hetop(estimator = "EB_shrunk")}, which produces similar
+  estimates much faster and without external dependencies such as
+  JAGS. If \code{fh_hetop()}'s runtime can be improved, we may revive
+  it for users who would like to use covariates or prefer fully
+  Bayesian estimation. For now, though, \code{fh_hetop()} is
+  deprecated for slow performance.
 }
 
 \description{
-  Fits the FH-HETOP model described by Lockwood, Castellano and Shear
-  (2018) using the \code{jags} function in the suggested package
-  R2jags.  Requires JAGS (a system binary, not an R package) to be
-  installed; see \url{https://sourceforge.net/projects/mcmc-jags/}.
+  \code{fh_hetop()} calculates Bayesian estimates of the HETOP model
+  parameters using Markov Chain Monte Carlo. It depends on
+  \code{R2jags::jags}, and JAGS must be installed for
+  \code{fh_hetop()} to run; JAGS can be downloaded from
+  \url{https://sourceforge.net/projects/mcmc-jags/}. \code{fh_hetop()} produces estimates on a
+  standardized scale, not on the native scale of the assessment.
 
-  This function previously required the caller to supply a
-  \code{fixedcuts} argument, two cutpoints used to identify the
-  location and scale of the group parameters. That argument has been
-  removed: it was never a channel for incorporating genuinely known
-  cutpoints (e.g. published cut scores on the native test-score
-  scale), only a coordinate-system normalization required for any
-  identified fit, and supplying cutpoints on the native test-score
-  scale reliably sent the MCMC sampler into a degenerate region it
-  could not escape rather than producing an error. Cutpoints are now
-  derived internally from the pooled bin proportions, matching
-  \code{\link[=mle_hetop]{mle_hetop()}}, which was fixed the same way for the same
-  reason.
+  Unlike the other HETOP estimators in this package,
+  \code{fh_hetop()} can accept covariates to predict district means
+  and log standard deviations. All covariates must be centered so that
+  they sum to zero across groups.
+
+  Further details on the \code{fh_hetop()} model are provided by
+  Lockwood, Castellano and Shear (2018).
 }
 
 \usage{
@@ -97,43 +95,13 @@ seed=12345, modelfileonly = FALSE, modloc=NULL, ...)
   }
 }
 
-\details{
-
-  The function is basically a wrapper for \code{R2jags::jags}, building
-  model code depending on the specification of the Efron priors and any
-  covariates for the group means and group standard deviations.  Details
-  on the FH-HETOP model are provided by Lockwood, Castellano and Shear
-  (2018).
-
-  Covariates to predict the group means and group log standard
-  deviations are optional.  However, \code{Xm} and \code{Xs} must both
-  be either NULL, or specified; the current version of this function
-  cannot use covariates to predict one set of parameters but not use any
-  covariates to predict the other set.  While covariates in general must
-  be present or absent simultaneously for the two sets of parameters, it
-  is not necessary that the same covariates be used to predict the two
-  sets of parameters.  All covariates must be centered so that they sum
-  to zero across groups.
-
-  The location and scale of the group means are identified for the
-  purpose of conducting the estimation by fixing two of the cutpoints.
-  This function derives the two fixed cutpoints internally from the
-  pooled bin proportions via
-  \code{qnorm(cumsum(colSums(ngk)/sum(ngk))[1:2])}, the same expression
-  \code{\link[=mle_hetop]{mle_hetop()}} uses, which places them on the same
-  standardized scale as the model's internal latent parameters. This
-  is a normalization needed for any identified fit, not a way to
-  supply cutpoints that are known in advance on the test-score scale;
-  see \code{\link[=mle_hetop]{mle_hetop()}}'s documentation for further discussion.
-}
-
 \value{A object of class \code{rjags}, with additional information
   specific to the FH-HETOP model.  The additional information is stored
   as a list called \code{fh_hetop_extras} with the following components:
 
   \item{Finfo}{A list containing information used to estimate the population
-    distribution of the residuals from the FH-HETOP model.  Note that
-    the posterior samples of the parameters defining the residual
+    distribution of the residuals from the FH-HETOP model.  Posterior
+    samples of the parameters defining the residual
     distribution can be found in the \code{BUGSoutput} element of the
     returned object.}
 
@@ -179,9 +147,8 @@ seed=12345, modelfileonly = FALSE, modloc=NULL, ...)
 
 \author{
   J.R. Lockwood \email{jrlockwood@ets.org} (original implementation);
-  Paul T. von Hippel \email{ph3828@eid.utexas.edu} (removal of the
-  \code{fixedcuts} argument in favor of internal derivation, matching
-  \code{\link[=mle_hetop]{mle_hetop()}}).
+  Paul T. von Hippel \email{ph3828@eid.utexas.edu} (modifications for
+  \pkg{binest}).
 }
 
 \examples{

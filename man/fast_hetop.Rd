@@ -1,18 +1,9 @@
 \name{fast_hetop}
 \alias{fast_hetop}
 
-\title{Fast Estimation of Group Means and SDs from Binned Counts}
+\title{fast_hetop(): Fast Estimation of the HETOP model for Binned Test Scores}
 
 \description{
-  Education agencies often report school or district score
-  distributions as the number of students scoring in each of several
-  score ranges, or \emph{bins}, separated by threshold scores, or
-  \emph{cuts}. The functions in this package translate those bin counts
-  into estimates of the mean and standard deviation (SD). They do so
-  using the heteroskedastic ordered probit (HETOP) model, which assumes
-  that scores follow a normal distribution within each school or
-  district, each of which has its own mean and SD.
-
   \code{fast_hetop()} is the preferred function in this package. It can
   produce estimates for hundreds or thousands of schools or districts
   in less than a second. It can provide either maximum likelihood
@@ -32,15 +23,10 @@
   \code{\link[=mle_hetop]{mle_hetop()}}, but runs much more quickly,
   especially when the number of schools or districts is large.
 
-  \code{fast_hetop(estimator = "EB_shrunk")} provides very similar
-  estimates to \code{\link[=fh_hetop]{fh_hetop()}}, and again runs much
+  \code{fast_hetop(estimator = "EB_shrunk")} provides similar but not
+  identical estimates to \code{\link[=fh_hetop]{fh_hetop()}}, and again runs much
   more quickly.
 
-  \code{mle_hetop()} and \code{fh_hetop()} were written by
-  J. R. Lockwood; \code{mle_hetop()} has since been edited slightly by
-  Paul T. von Hippel. Both are included in the package for comparison,
-  but because of their relative slowness they are no longer maintained
-  or recommended.
 }
 
 \usage{

@@ -1,13 +1,15 @@
 \name{gendata_hetop}
 \alias{gendata_hetop}
 
-\title{Generate count data from Heteroskedastic Ordered Probit (HETOP) Model}
+\title{gendata_hetop(): Generate count data from Heteroskedastic Ordered Probit (HETOP) Model}
 
 \description{
-  Generates count data for \code{G} groups and \code{K} ordinal
-  categories under a heteroskedastic ordered probit model, given the
-  total number of units in each group and parameters determining the
-  category probabilities for each group.
+  \code{gendata_hetop()} can simulate data that satisfies the
+  assumptions of the HETOP model. It can be used to test the properties
+  of an estimator when the HETOP assumptions are met. It generates
+  \code{ng} scores for each of \code{G} groups (e.g., districts) and
+  bins the scores into \code{K} bins. It requires the bin cutpoints and
+  the mean and SD for each group.
 }
 
 \usage{

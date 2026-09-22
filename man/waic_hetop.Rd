@@ -4,9 +4,11 @@
 \title{WAIC for FH-HETOP model}
 
 \description{
-  Computes the Watanabe-Akaike information criterion (WAIC)
-  for the FH-HETOP model using the data and posterior samples of the
-  group means, group standard deviations and cutpoints.
+  \code{waic_hetop()} is a helper function used by
+  \code{\link[=fh_hetop]{fh_hetop()}}. \code{waic_hetop()} computes the
+  Watanabe-Akaike information criterion (WAIC) for the FH-HETOP model
+  using the data and posterior samples of the group means, group
+  standard deviations and cutpoints.
 }
 
 \usage{

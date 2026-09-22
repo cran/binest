@@ -1,3 +1,41 @@
+# binest 0.3-1 (2026-09-22)
+
+A documentation-only release. No code, arguments, return values or
+results changed from 0.3-0.
+
+## The reference manual now distinguishes package-level from function-level pages
+
+* Help-page titles now begin with the topic they document
+  (`fast_hetop():`, `mle_hetop():`, `fh_hetop():`, `gendata_hetop():`,
+  `tx_g6_math_2018:`). CRAN's HTML reference manual renders only the
+  title, without the topic name that the PDF manual prints beside it,
+  so the package-level page and the `fast_hetop()` page previously
+  appeared under two nearly identical headings with nothing to
+  distinguish them.
+
+## Descriptions rewritten
+
+* The `Description` field of `DESCRIPTION` now explains what binned
+  score data is and names `fast_hetop()` as the fast estimator, with
+  the two references moved to a closing sentence rather than
+  interrupting the text.
+
+* `?binest` now opens by comparing the three functions on speed, with
+  a short list saying what each returns and which to prefer. It is the
+  single place that records the fork history: the `HETOP` package's
+  archival, and the two arguments (`fixedcuts`, `svals`) removed when
+  forking.
+
+* `?mle_hetop`, `?fh_hetop`, `?gendata_hetop`, `?triple_goal`,
+  `?waic_hetop` and `?tx_g6_math_2018` now describe what each function
+  does, rather than its internal workings or the arguments it no
+  longer has. `?fh_hetop` leads with what the function computes and
+  where to obtain JAGS.
+
+* Removed two references (Fisher 1922, Sheppard 1898) that were listed
+  in `?binest` but cited nowhere on that page, and added DOIs to the
+  two that remain.
+
 # binest 0.3-0 (2026-09-21)
 
 * **Breaking change.** The `iterate` argument is withdrawn from
