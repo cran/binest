@@ -18,29 +18,47 @@ truth <- tx_g6_math_2018$reported_mean
 
 ## -----------------------------------------------------------------------------
 t0 <- Sys.time()
-fit_bm_known <- bin_means(ngk, cutpoints = cuts)
+fit_bm_known <- fast_hetop(ngk, cutpoints_known = TRUE, cutpoints = cuts,
+                           scope = "population")
 t_bm_known   <- as.numeric(Sys.time() - t0, units = "secs")
-cor(fit_bm_known$est_raw$group_mean_mle, truth)
+cor(fit_bm_known$est_raw$mean, truth)
+
+## -----------------------------------------------------------------------------
+fit_bm_sample <- fast_hetop(ngk, cutpoints_known = TRUE, cutpoints = cuts,
+                            scope = "sample")
+head(cbind(population = fit_bm_known$est_raw$mean_se,
+           sample     = fit_bm_sample$est_raw$mean_se))
 
 ## ----fig.width = 4.5, fig.height = 4.5----------------------------------------
-plot(truth, fit_bm_known$est_raw$group_mean_mle,
+plot(truth, fit_bm_known$est_raw$mean,
      pch = 16, cex = 0.5, col = rgb(0, 0, 0, 0.3),
      xlab = "True district mean",
      ylab = "Estimated mean (test-score scale)",
-     main = "bin_means (known cuts)")
+     main = "fast_hetop (known cuts)")
 abline(0, 1, col = "red", lty = 2)
 
 ## -----------------------------------------------------------------------------
 t0 <- Sys.time()
-fit_bm_null <- bin_means(ngk)
+fit_bm_null <- fast_hetop(ngk, scope = "population")
 t_bm_null   <- as.numeric(Sys.time() - t0, units = "secs")
 
 ## ----fig.width = 4.5, fig.height = 4.5----------------------------------------
-plot(truth, fit_bm_null$est_std$group_mean_mle,
+plot(truth, fit_bm_null$est_std$mean,
      pch = 16, cex = 0.5, col = rgb(0, 0, 0, 0.3),
      xlab = "True district mean",
      ylab = "Estimated mean (standardized)",
-     main = "bin_means (cuts from data)")
+     main = "fast_hetop (cuts from data)")
+
+## -----------------------------------------------------------------------------
+fit_bm_eb <- fast_hetop(ngk, cutpoints_known = TRUE, cutpoints = cuts,
+                        scope = "sample", estimator = "EB_shrunk")
+
+## ----fig.width = 4.5, fig.height = 4.5----------------------------------------
+plot(truth, fit_bm_eb$est_raw$mean,
+     pch = 16, cex = 0.5, col = rgb(0, 0, 0, 0.3),
+     xlab = "True district mean",
+     ylab = "EB-shrunk estimated mean",
+     main = "fast_hetop (EB_shrunk, known cuts)")
 
 ## -----------------------------------------------------------------------------
 set.seed(1)
@@ -58,13 +76,9 @@ plot(truth[sub], fit_mle$est_star$mug,
      main = "HETOP MLE (50-district subsample)")
 
 ## ----eval = FALSE-------------------------------------------------------------
-# state_props <- colSums(ngk) / sum(ngk)
-# state_cum   <- cumsum(state_props)
-# 
 # t0 <- Sys.time()
 # fit_fh <- fh_hetop(
 #   ngk       = ngk,
-#   fixedcuts = qnorm(state_cum[1:2]),
 #   p         = c(10, 10),
 #   m         = c(100, 100),
 #   gridL     = c(-5.0, log(0.10)),

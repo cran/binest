@@ -1,9 +1,10 @@
 Package: binest
 Type: Package
 Title: Estimation of Group Means and SDs from Binned Count Data
-Version: 0.2-1
-Date: 2026-05-27
-Depends: R (>= 3.5.0), splines, stats
+Version: 0.3-0
+Date: 2026-09-21
+Depends: R (>= 3.5.0)
+Imports: splines, stats, utils
 Suggests: knitr, rmarkdown, R2jags
 Authors@R: c(
     person("Paul T.", "von Hippel", role = c("aut", "cre"),
@@ -12,30 +13,32 @@ Authors@R: c(
     person("J.R.", "Lockwood", role = "aut",
            comment = "Original HETOP package author"))
 Description: Estimates group-level means and standard deviations from
-    binned (coarsened) count data, where the within-bin scores are
-    unobserved.  The package implements three methods that share a
-    common output structure: bin_means() (a fast estimator that
-    assumes within-district normality and uses pooled bin proportions
-    to derive bin-conditional truncated-normal expectations),
-    mle_hetop() (maximum likelihood for the heteroskedastic ordered
-    probit model of Reardon, Shear, Castellano and Ho 2017
-    <doi:10.3102/1076998616666279>), and fh_hetop() (the Bayesian
-    Fay-Herriot variant of Lockwood, Castellano and Shear 2018
-    <doi:10.3102/1076998618795124>).  The mle_hetop() and fh_hetop()
-    functions are forked from the 'HETOP' package by J. R. Lockwood
-    ('CRAN', last released 2019).  mle_hetop() has been modified to
-    speed up the runtime via a vectorized inner loop and to remove
-    two user-facing arguments (fixedcuts and svals) that some users
-    found confusing; cutpoints and starting values are now derived
-    internally from the data.
+    binned (coarsened) data, where only the number of cases in each of
+    several ordered bins is observed and the underlying values are not.
+    The main function, fast_hetop(), fits the heteroskedastic ordered
+    probit model of Reardon, Shear, Castellano and Ho (2017)
+    <doi:10.3102/1076998616666279> one group at a time, solving
+    closed-form truncated-normal score equations instead of optimizing
+    jointly over all groups.  Runtime is therefore linear in the number
+    of groups, so thousands of schools, districts or subgroups can be
+    fitted in under a second.  Cut scores may be supplied when an
+    agency publishes them, or estimated from the data when it does not.
+    Output includes standard errors and confidence intervals, an
+    optional empirical Bayes shrinkage estimator, and a per-group
+    goodness-of-fit test of the within-group normality assumption.
+    Also included, and deprecated, are mle_hetop() and fh_hetop(),
+    which fit the same model by joint maximum likelihood and by Markov
+    chain Monte Carlo (Lockwood, Castellano and Shear 2018
+    <doi:10.3102/1076998618795124>); they are forked from the 'HETOP'
+    package by J. R. Lockwood and retained only for comparison.
 License: GPL (>= 2)
 VignetteBuilder: knitr
 Encoding: UTF-8
 NeedsCompilation: no
-Packaged: 2026-06-02 16:51:41 UTC; ph3828
+Packaged: 2026-09-22 03:55:56 UTC; ph3828
 Author: Paul T. von Hippel [aut, cre],
   David J. Hunter [aut],
   J.R. Lockwood [aut] (Original HETOP package author)
 Maintainer: Paul T. von Hippel <ph3828@eid.utexas.edu>
 Repository: CRAN
-Date/Publication: 2026-06-08 18:20:08 UTC
+Date/Publication: 2026-09-22 04:20:02 UTC

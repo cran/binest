@@ -1,18 +1,26 @@
 # binest
 
 Estimation of group-level means and standard deviations from binned
-(coarsened) count data. The package implements three methods with a
-common output structure:
+(coarsened) count data. All three functions fit the same
+heteroskedastic ordered probit (HETOP) model, in which each group's
+values are normally distributed around a mean and SD of its own. They
+differ only in how they fit it, and they share a common output
+structure:
 
-* `bin_means()` — fast per-group estimator under within-group
-  normality. Linear in the number of groups times the number of bins.
-* `mle_hetop()` — maximum-likelihood fit of the heteroskedastic
-  ordered probit (HETOP) model.
-* `fh_hetop()` — Bayesian variant of HETOP via MCMC.
+* `fast_hetop()` — fits each group separately, solving closed-form
+  truncated-normal score equations. Linear in the number of groups
+  times the number of bins. This is the preferred function in the
+  package.
+* `mle_hetop()` — maximizes the likelihood over all groups at once.
+  Returns the same estimates as `fast_hetop(estimator = "ML")`, far
+  more slowly. Deprecated in favor of `fast_hetop()`.
+* `fh_hetop()` — fits the model by MCMC, placing a hyperprior over the
+  group parameters and reporting posterior means. Deprecated in favor
+  of `fast_hetop()`.
 
 This package was previously called HETOP and was maintained by J. R.
-Lockwood; it is renamed and extended to reflect the broader set of
-estimators now included.
+Lockwood; it is renamed and extended to reflect the broader
+functionality now included.
 
 ## Installation
 
@@ -21,7 +29,7 @@ estimators now included.
 remotes::install_github("paulvonhippel/binest")
 ```
 
-(Or `install.packages("binest")` once on CRAN.)
+(Or `install.packages("binest")` for the released version on CRAN.)
 
 ## A quick example
 
@@ -33,12 +41,18 @@ ngk <- with(tx_g6_math_2018,
             cbind(unsatisfactory, approaches, meets, masters))
 cuts <- c(1536, 1653, 1772)
 
-fit <- bin_means(ngk, cutpoints = cuts)
-cor(fit$est_raw$group_mean_mle, tx_g6_math_2018$reported_mean)
+## `scope` is required: Texas reports counts for every tested student,
+## so each district's students are its whole population and the only
+## uncertainty is the binning. Use scope = "sample" when the units are
+## a sample from a larger population, which adds sampling error to the
+## reported SEs.
+fit <- fast_hetop(ngk, cutpoints_known = TRUE, cutpoints = cuts,
+                  scope = "population")
+cor(fit$est_raw$mean, tx_g6_math_2018$reported_mean)
 ```
 
-See `vignette("binest")` for a full comparison of the three estimators
-on the Texas STAAR Grade-6 mathematics data.
+See `vignette("binest")` for a full comparison of the three functions
+on the Texas STAAR Grade 6 mathematics data.
 
 ## References
 

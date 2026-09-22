@@ -1,4 +1,4 @@
-fh_hetop <- function(ngk, fixedcuts, p, m, gridL, gridU, Xm=NULL, Xs=NULL, seed=12345, modelfileonly = FALSE, modloc=NULL, ...){
+fh_hetop <- function(ngk, p, m, gridL, gridU, Xm=NULL, Xs=NULL, seed=12345, modelfileonly = FALSE, modloc=NULL, ...){
 
     set.seed(seed)
     tmpdir <- tempdir()
@@ -16,10 +16,6 @@ fh_hetop <- function(ngk, fixedcuts, p, m, gridL, gridU, Xm=NULL, Xs=NULL, seed=
     ## #############################################
     if(is.null(ngk)){
         stop("ngk not specified")
-    }
-
-    if(is.null(fixedcuts)){
-        stop("fixedcuts not specified")
     }
 
     if(is.null(p)){
@@ -77,23 +73,33 @@ fh_hetop <- function(ngk, fixedcuts, p, m, gridL, gridU, Xm=NULL, Xs=NULL, seed=
     ng  <- apply(ngk, 1, sum)
     pg  <- ng/sum(ng)
 
-    ## fixedcuts
-    if(!is.numeric(fixedcuts)){
-        stop("fixedcuts must be a numeric vector of length 2")
-    }
-    
-    if(length(fixedcuts) != 2){
-        stop("fixedcuts must be a numeric vector of length 2")        
+    ## Derive the two fixed cutpoints internally on the standardized
+    ## scale, from the pooled bin proportions -- matching mle_hetop(),
+    ## which was fixed the same way for the same reason (see NEWS.md,
+    ## binest 0.1-0). This function previously required the caller to
+    ## supply a `fixedcuts` argument. That argument was never a channel
+    ## for incorporating genuinely known cutpoints (e.g. published cut
+    ## scores on the native test-score scale): the model is unidentified
+    ## without pinning down the location and scale of the latent normal
+    ## somehow, and fixing two cutpoints is only ever a coordinate-system
+    ## normalization, not a constraint reflecting external knowledge --
+    ## the "fixed" values get no special treatment relative to the
+    ## freely-estimated ones. Supplying cutpoints on the native
+    ## test-score scale (rather than the standardized scale the model
+    ## actually uses internally) reliably sent the MCMC sampler into a
+    ## degenerate region it could not escape (cell probabilities driven
+    ## to 0 or 1 in floating point), rather than an error -- the same
+    ## failure mode documented for mle_hetop() prior to its fix.
+    ## Deriving the cutpoints internally removes both the footgun and
+    ## the false impression that known cutpoints could be used here.
+    pooled_props <- colSums(ngk) / sum(ngk)
+    pooled_cum   <- cumsum(pooled_props)
+    fixedcuts    <- qnorm(pooled_cum[1:2])
+
+    if(any(is.infinite(fixedcuts))){
+        stop("Internally derived cutpoints are infinite; pooled bin proportions must all be positive")
     }
 
-    if(any(is.na(fixedcuts))){
-        stop("fixedcuts cannot contain missing values")
-    }
-
-    if(fixedcuts[1] >= fixedcuts[2]){
-        stop("fixedcuts[1] must be strictly less than fixedcuts[2]")
-    }
-    
     cuts12 <- sort(fixedcuts)
     if(K == 3){
         cuts <- cuts12

@@ -15,9 +15,9 @@ waic_hetop(ngk, samps)
 
 \arguments{
   \item{ngk}{
-    Numeric matrix of dimension \code{G x K} in which column \code{k} of
-    row \code{g} indicates the number of units from group \code{g}
-    falling into category \code{k}.
+    Data giving bin counts. Column \code{k} of row \code{g} counts how
+    many students from school or district \code{g} scored in bin
+    \code{k}.
   }
 
   \item{samps}{
@@ -31,7 +31,7 @@ waic_hetop(ngk, samps)
 \details{
   Although this function can be called directly by the user, it is
   primarily intended to be used to compute WAIC as part of the function
-  \code{fh_hetop}.  Details on the WAIC calculation are provided by
+  \code{fh_hetop()}.  Details on the WAIC calculation are provided by
   Vehtari and Gelman (2017).
 }
 
@@ -68,10 +68,10 @@ waic_hetop(ngk, samps)
 if (requireNamespace("R2jags", quietly = TRUE)) {
   set.seed(42)
   G <- 10
-  ngk <- gendata_hetop(G = G, K = 4, nj = rep(50, G),
+  ngk <- gendata_hetop(G = G, K = 4, ng = rep(50, G),
                        mug = rnorm(G), sigmag = exp(rnorm(G, 0, 0.2)),
-                       cutpoints = c(-1, 0, 1))$ngk
-  m <- fh_hetop(ngk, fixedcuts = c(-1, 0),
+                       cutpoints = c(-1, 0, 1))
+  m <- fh_hetop(ngk,
                 p = c(10, 10), m = c(100, 100),
                 gridL = c(-5, log(0.10)), gridU = c(5, log(5.0)),
                 n.iter = 200, n.burnin = 100, seed = 1)

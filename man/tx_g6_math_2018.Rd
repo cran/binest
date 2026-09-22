@@ -2,13 +2,13 @@
 \alias{tx_g6_math_2018}
 \docType{data}
 
-\title{Texas STAAR Grade-6 Mathematics, 2017-18: District-Level Bin Counts}
+\title{Texas STAAR Grade 6 Mathematics, 2017-18: District-Level Bin Counts}
 
 \description{
   District-level counts of students in each of four proficiency
   categories on the Texas State of Texas Assessments of Academic
-  Readiness (STAAR) Grade-6 mathematics test, 2017-18 administration.
-  For each district the dataset also reports the average scale score
+  Readiness (STAAR) Grade 6 mathematics test, 2017-18 administration.
+  For each district the dataset also reports the average score
   across all tested students, which can be used as ground truth for
   evaluating estimators that recover district means from binned
   counts.
@@ -22,15 +22,15 @@
     \item{district_id}{Sequential integer identifier (1 to 1151).}
     \item{district_name}{District name (\code{character}).}
     \item{n_tested}{Total students tested in the district.}
-    \item{unsatisfactory}{Students with scale score below 1536
+    \item{unsatisfactory}{Students scoring below 1536
                          (proficiency category "Did Not Meet Grade Level").}
-    \item{approaches}{Students with scale score in [1536, 1653)
+    \item{approaches}{Students scoring in [1536, 1653)
                        ("Approaches Grade Level").}
-    \item{meets}{Students with scale score in [1653, 1772)
+    \item{meets}{Students scoring in [1653, 1772)
                   ("Meets Grade Level").}
-    \item{masters}{Students with scale score >= 1772
+    \item{masters}{Students scoring >= 1772
                     ("Masters Grade Level").}
-    \item{reported_mean}{District average scale score, computed by the
+    \item{reported_mean}{District average score, computed by the
                           Texas Education Agency from individual
                           student scores.}
   }
@@ -53,16 +53,22 @@
 data(tx_g6_math_2018)
 str(tx_g6_math_2018)
 
-## Recover district means using bin means with known cutpoints.
+## Recover district means using fast_hetop with known cutpoints.
 ngk <- with(tx_g6_math_2018,
             cbind(unsatisfactory, approaches, meets, masters))
-fit <- bin_means(ngk, cutpoints = c(1536, 1653, 1772))
+## These are administrative counts covering every tested student, so
+## each district's students are its whole population: scope = "population".
+fit <- fast_hetop(ngk, cutpoints_known = TRUE,
+                  cutpoints = c(1536, 1653, 1772),
+                  scope = "population")
 
 ## Correlation with reported truth on the test-score scale.
-## (Districts with fewer than three populated bins are NA-coded by
-## bin_means; use complete.obs for the comparison.)
-cor(fit$est_raw$group_mean_mle, tx_g6_math_2018$reported_mean,
-    use = "complete.obs")
+## (The 17 districts with fewer than three populated bins cannot
+## identify both a mean and an SD; by default fast_hetop() estimates
+## their means using a borrowed SD.  Pass
+## estimate_unidentified_districts = FALSE to get NA instead, in which
+## case use = "complete.obs" is needed here.)
+cor(fit$est_raw$mean, tx_g6_math_2018$reported_mean)
 }
 
 \keyword{datasets}

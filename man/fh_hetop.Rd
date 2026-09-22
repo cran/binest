@@ -4,35 +4,44 @@
 \title{Fit Fay-Herriot Heteroskedastic Ordered Probit (FH-HETOP) Model
   using JAGS}
 
+\section{Deprecated}{
+  \code{fh_hetop()} is deprecated in favor of \code{\link[=fast_hetop]{fast_hetop()}},
+  which runs much faster, requires no external dependencies (no JAGS
+  installation), and on real data has been found to be at least as
+  accurate. \code{fh_hetop()} is retained in the package only for
+  comparison purposes and receives no further development.
+}
+
 \description{
   Fits the FH-HETOP model described by Lockwood, Castellano and Shear
   (2018) using the \code{jags} function in the suggested package
   R2jags.  Requires JAGS (a system binary, not an R package) to be
   installed; see \url{https://sourceforge.net/projects/mcmc-jags/}.
 
-  Note: \code{fh_hetop} has been superseded by \code{\link{bin_means}},
-  which runs much faster, requires no external dependencies, and on
-  real data has been found to be at least as accurate as
-  \code{fh_hetop}.  \code{fh_hetop} is retained in the
-  package for comparison purposes.
+  This function previously required the caller to supply a
+  \code{fixedcuts} argument, two cutpoints used to identify the
+  location and scale of the group parameters. That argument has been
+  removed: it was never a channel for incorporating genuinely known
+  cutpoints (e.g. published cut scores on the native test-score
+  scale), only a coordinate-system normalization required for any
+  identified fit, and supplying cutpoints on the native test-score
+  scale reliably sent the MCMC sampler into a degenerate region it
+  could not escape rather than producing an error. Cutpoints are now
+  derived internally from the pooled bin proportions, matching
+  \code{\link[=mle_hetop]{mle_hetop()}}, which was fixed the same way for the same
+  reason.
 }
 
 \usage{
-fh_hetop(ngk, fixedcuts, p, m, gridL, gridU, Xm=NULL, Xs=NULL,
+fh_hetop(ngk, p, m, gridL, gridU, Xm=NULL, Xs=NULL,
 seed=12345, modelfileonly = FALSE, modloc=NULL, ...)
 }
 
 \arguments{
   \item{ngk}{
-    Numeric matrix of dimension \code{G x K} in which column \code{k} of
-    row \code{g} indicates the number of units from group \code{g}
-    falling into category \code{k}.
-  }
-
-  \item{fixedcuts}{
-    A vector of length 2 providing the first two cutpoints, to identify
-    the location and scale of the group parameters.  Note that this
-    suffices for any \code{K >= 3}.
+    Data giving bin counts. Column \code{k} of row \code{g} counts how
+    many students from school or district \code{g} scored in bin
+    \code{k}.
   }
 
   \item{p}{
@@ -105,6 +114,17 @@ seed=12345, modelfileonly = FALSE, modloc=NULL, ...)
   is not necessary that the same covariates be used to predict the two
   sets of parameters.  All covariates must be centered so that they sum
   to zero across groups.
+
+  The location and scale of the group means are identified for the
+  purpose of conducting the estimation by fixing two of the cutpoints.
+  This function derives the two fixed cutpoints internally from the
+  pooled bin proportions via
+  \code{qnorm(cumsum(colSums(ngk)/sum(ngk))[1:2])}, the same expression
+  \code{\link[=mle_hetop]{mle_hetop()}} uses, which places them on the same
+  standardized scale as the model's internal latent parameters. This
+  is a normalization needed for any identified fit, not a way to
+  supply cutpoints that are known in advance on the test-score scale;
+  see \code{\link[=mle_hetop]{mle_hetop()}}'s documentation for further discussion.
 }
 
 \value{A object of class \code{rjags}, with additional information
@@ -121,25 +141,25 @@ seed=12345, modelfileonly = FALSE, modloc=NULL, ...)
     fit the model, including the counts, covariates and fixed cutpoints.}
 
   \item{waicinfo}{A list containing information about the WAIC for the
-    estimated model; see help file for \code{\link{waic_hetop}}.
+    estimated model; see help file for \code{\link[=waic_hetop]{waic_hetop()}}.
   }
 
   \item{est_star_samps}{A list with posterior samples of parameters with
     respect to the 'star' scale which defines the location and scale of
     the group means and standard deviations that corresponds to a marginal
     population mean of zero and marginal population standard deviation of
-    1.  Additional details in help file for \code{\link{mle_hetop}}
+    1.  Additional details in help file for \code{\link[=mle_hetop]{mle_hetop()}}
   }
 
   \item{est_star_mug}{A dataframe containing various estimates of the
   group means on the 'star' scale, including posterior means,
   Constrained Bayes and Triple-Goal estimates.  Additional details in
-  help file for \code{\link{triple_goal}}.}
+  help file for \code{\link[=triple_goal]{triple_goal()}}.}
 
   \item{est_star_sigmag}{A dataframe containing various estimates of the
   group standard deviations on the 'star' scale, including posterior
   means, Constrained Bayes and Triple-Goal estimates.  Additional
-  details in help file for \code{\link{triple_goal}}.}
+  details in help file for \code{\link[=triple_goal]{triple_goal()}}.}
 }
 
 \seealso{
@@ -158,7 +178,10 @@ seed=12345, modelfileonly = FALSE, modloc=NULL, ...)
 }
 
 \author{
-  J.R. Lockwood \email{jrlockwood@ets.org}
+  J.R. Lockwood \email{jrlockwood@ets.org} (original implementation);
+  Paul T. von Hippel \email{ph3828@eid.utexas.edu} (removal of the
+  \code{fixedcuts} argument in favor of internal derivation, matching
+  \code{\link[=mle_hetop]{mle_hetop()}}).
 }
 
 \examples{
@@ -191,7 +214,7 @@ print(ngk)
 ## fit FH-HETOP model including covariates
 ## NOTE: using an extremely small number of iterations for testing,
 ##       so that convergence is not expected
-m <- fh_hetop(ngk, fixedcuts = c(-1.0, 0.0), p = c(10,10),
+m <- fh_hetop(ngk, p = c(10,10),
               m = c(100, 100), gridL = c(-5.0, log(0.10)),
               gridU = c(5.0, log(5.0)), Xm = Z, Xs = Z,
               n.iter = 100, n.burnin = 50)

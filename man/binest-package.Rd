@@ -8,40 +8,52 @@
 \description{
   Estimates group-level means and standard deviations from binned
   (coarsened) count data, where the within-bin scores are unobserved.
-  The package implements three methods that share a common output
-  structure:
+  All three functions fit the same heteroskedastic ordered probit
+  (HETOP) model of Reardon, Shear, Castellano and Ho (2017), in which
+  each group's values are normally distributed around a mean and SD of
+  its own.  They differ only in how they fit it, and they share a
+  common output structure:
 
   \itemize{
-    \item \code{\link{bin_means}}: a fast per-group estimator under
-      within-group normality.  Runs in time linear in the number of
-      groups times the number of bins.  This is the
-      preferred estimator in the package.
-    \item \code{\link{mle_hetop}}: maximum-likelihood fit of the
-      heteroskedastic ordered probit (HETOP) model of Reardon,
-      Shear, Castellano and Ho (2017).
-    \item \code{\link{fh_hetop}}: the Bayesian Fay-Herriot variant
-      of HETOP by Lockwood, Castellano and Shear (2018).
+    \item \code{\link[=fast_hetop]{fast_hetop()}}: fits each group
+      separately, solving closed-form truncated-normal score
+      equations.  Runs in time linear in the number of groups times
+      the number of bins.  This is the preferred function in the
+      package.
+    \item \code{\link[=mle_hetop]{mle_hetop()}}: maximizes the
+      likelihood over all groups at once.  Returns the same estimates
+      as \code{fast_hetop(estimator = "ML")}, far more slowly.
+      Deprecated in favor of \code{\link[=fast_hetop]{fast_hetop()}}.
+    \item \code{\link[=fh_hetop]{fh_hetop()}}: fits the model by MCMC,
+      placing a Fay-Herriot hyperprior over the group parameters and
+      reporting posterior means (Lockwood, Castellano and Shear 2018).
+      Deprecated in favor of \code{\link[=fast_hetop]{fast_hetop()}}.
   }
 
-  The \code{mle_hetop} and \code{fh_hetop} functions are forked from
+  The \code{mle_hetop()} and \code{fh_hetop()} functions are forked from
   the HETOP package by J. R. Lockwood (CRAN, last released 2019).
-  \code{mle_hetop} has been modified to speed up its runtime via a
+  \code{mle_hetop()} has been modified to speed up its runtime via a
   vectorized inner loop and to remove two user-facing arguments
   (\code{fixedcuts} and \code{svals}) that some users found
   confusing; cutpoints and starting values are now derived internally
-  from the data.
+  from the data.  \code{fh_hetop()} has been modified the same way,
+  removing its \code{fixedcuts} argument for the same reason: it was
+  never a channel for supplying cutpoints known in advance on the
+  test-score scale, only a coordinate-system normalization, and
+  supplying native-scale cutpoints could send the MCMC sampler into a
+  degenerate region rather than producing an error.
 
-  \code{mle_hetop} and \code{fh_hetop} are superseded by
-  \code{bin_means} and remain in the package for comparison
+  \code{mle_hetop()} and \code{fh_hetop()} are deprecated in favor of
+  \code{fast_hetop()} and remain in the package only for comparison
   purposes.  See \code{vignette("binest")} for an empirical
-  comparison on Texas STAAR Grade-6 mathematics data.
+  comparison on Texas STAAR Grade 6 mathematics data.
 }
 
 \section{Bundled data}{
   The package ships with \code{\link{tx_g6_math_2018}}, a
-  district-level dataset of bin counts and reported mean scale scores
+  district-level dataset of bin counts and reported mean scores
   from the 2017-18 administration of the State of Texas Assessments
-  of Academic Readiness (STAAR) Grade-6 mathematics test.  See the
+  of Academic Readiness (STAAR) Grade 6 mathematics test.  See the
   vignette for usage.
 }
 

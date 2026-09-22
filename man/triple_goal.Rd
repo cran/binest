@@ -3,7 +3,7 @@
 
 \title{Shen and Louis (1998) Triple Goal Estimators}
 
-\description{ \code{triple_goal} implements the \dQuote{Triple Goal} estimates
+\description{ \code{triple_goal()} implements the \dQuote{Triple Goal} estimates
   of Shen and Louis (1998) for a vector of parameters given a sample
   from the posterior distribution of those parameters.  Also computes
   \dQuote{constrained Bayes} estimators of Ghosh (1992).}

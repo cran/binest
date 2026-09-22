@@ -3,6 +3,14 @@
 
 \title{Maximum Likelihood Estimation of Heteroskedastic Ordered Probit (HETOP) Model}
 
+\section{Deprecated}{
+  \code{mle_hetop()} is deprecated in favor of \code{\link[=fast_hetop]{fast_hetop()}},
+  which runs much faster, produces an estimate for every identified
+  group, and on real data has been found to be at least as accurate.
+  \code{mle_hetop()} is retained in the package only for comparison
+  purposes and receives no further development.
+}
+
 \description{
   Computes MLEs of \code{G} group means and standard deviations using
   count data from \code{K} ordinal categories under a heteroskedastic
@@ -21,11 +29,6 @@
   silent optimization failures.  Cutpoints and starting values are
   now derived internally from the data.
 
-  Note: \code{mle_hetop} has been superseded by \code{\link{bin_means}},
-  which runs much faster, produces an estimate for every identified
-  group, and on real data has been found to be at least as accurate
-  as \code{mle_hetop}.  \code{mle_hetop} is retained in the
-  package for comparison purposes.
 }
 
 \usage{
@@ -34,9 +37,9 @@ mle_hetop(ngk, iterlim = 1500, ...)
 
 \arguments{
   \item{ngk}{
-    Numeric matrix of dimension \code{G x K} in which column \code{k} of
-    row \code{g} indicates the number of units from group \code{g}
-    falling into category \code{k}.
+    Data giving bin counts. Column \code{k} of row \code{g} counts how
+    many students from school or district \code{g} scored in bin
+    \code{k}.
   }
 
   \item{iterlim}{
